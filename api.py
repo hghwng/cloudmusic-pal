@@ -31,7 +31,7 @@ class NeteaseAPI:
         payload_dict = dict(url=url, method=method, params=params)
         payload_bytes = NeteaseAPI.encrypt(payload_dict)
         response = self.req.post(NeteaseAPI.API_URL, {'eparams': payload_bytes})
-        return response.text
+        return json.loads(response.text)
 
     def dump_cookie(self, path):
         import pickle
@@ -56,23 +56,23 @@ class NeteaseAPI:
         URL = 'http://music.163.com/api/v3/playlist/detail'
         return self.request(URL, dict(id=pid, n=0, t=-1, s=0))
 
-    def get_song_detail(self, sids):
+    def get_track_detail(self, tids):
         URL = 'http://music.163.com/api/v3/song/detail'
-        c = [dict(id=t, v=3) for t in sids]
+        c = [dict(id=t, v=3) for t in tids]
         return self.request(URL, dict(c=json.dumps(c)))
 
-    def get_player_url(self, sids, bitrate='320000'):
+    def get_player_url(self, tids, bitrate='320000'):
         URL = 'http://music.163.com/api/song/enhance/player/url'
-        return self.request(URL, dict(br=bitrate, ids=json.dumps(sids)))
+        return self.request(URL, dict(br=bitrate, ids=json.dumps(tids)))
 
-    def set_song_like(self, sid):
+    def like_track(self, tid):
         URL = 'http://music.163.com/api/song/like'
-        return self.request(URL, dict(userid=0, trackId=sid, like=True))
+        return self.request(URL, dict(userid=0, trackId=tid, like=True))
 
-    def manipulate_playlist_tracks(self, pid, sids, op):
+    def manipulate_playlist_tracks(self, pid, tids, op):
         ''' op: add/del '''
         URL = 'http://music.163.com/api/playlist/manipulate/tracks'
-        return self.request(URL, dict(pid=pid, trackIds=sids, op=op))
+        return self.request(URL, dict(pid=pid, trackIds=tids, op=op))
 
 
 def main():
@@ -89,12 +89,12 @@ def main():
         result = api.get_user_playlist(int(argv[2]))
     elif argv[1] == 'pd':
         result = api.get_playlist_detail(int(argv[2]))
-    elif argv[1] == 'sd':
-        result = api.get_song_detail((int(argv[2]), ))
+    elif argv[1] == 'td':
+        result = api.get_track_detail((int(argv[2]), ))
     elif argv[1] == 'pu':
         result = api.get_player_url((int(argv[2]), ))
     elif argv[1] == 'li':
-        result = api.set_song_like(int(argv[2]))
+        result = api.like_track(int(argv[2]))
     elif argv[1] == 'mta':
         result = api.manipulate_playlist_tracks(int(argv[2]), (int(argv[3]),), 'add')
     elif argv[1] == 'mtd':
