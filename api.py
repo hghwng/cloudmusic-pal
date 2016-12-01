@@ -58,7 +58,7 @@ class NeteaseAPI:
 
     def get_track_detail(self, tids):
         URL = 'http://music.163.com/api/v3/song/detail'
-        c = [dict(id=t, v=3) for t in tids]
+        c = [dict(id=t) for t in tids]
         return self.request(URL, dict(c=json.dumps(c)))
 
     def get_player_url(self, tids, bitrate='320000'):
