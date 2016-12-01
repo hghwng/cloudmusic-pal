@@ -74,6 +74,10 @@ class NeteaseAPI:
         URL = 'http://music.163.com/api/playlist/manipulate/tracks'
         return self.request(URL, dict(pid=pid, trackIds=tids, op=op))
 
+    def do_daily_task(self, type_):
+        URL = 'http://music.163.com/api/point/dailyTask'
+        return self.request(URL, dict(type=type_))
+
 
 def main():
     from sys import argv
@@ -85,6 +89,8 @@ def main():
     result = None
     if argv[1] == 'l':
         result = api.login_cellphone(argv[2], argv[3])
+    if argv[1] == 'dt':
+        result = api.do_daily_task(int(argv[2]))
     elif argv[1] == 'up':
         result = api.get_user_playlist(int(argv[2]))
     elif argv[1] == 'pd':
