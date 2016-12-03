@@ -61,9 +61,13 @@ class NeteaseAPI:
         c = [dict(id=t) for t in tids]
         return self.request(URL, dict(c=json.dumps(c)))
 
-    def get_player_url(self, tids, bitrate='320000'):
+    def get_player_url(self, tids, bitrate='999000'):
         URL = 'http://music.163.com/api/song/enhance/player/url'
         return self.request(URL, dict(br=bitrate, ids=json.dumps(tids)))
+
+    def get_download_url(self, tid, bitrate='999000'):
+        URL = 'http://music.163.com/api/song/enhance/download/url'
+        return self.request(URL, dict(br=bitrate, id=tid))
 
     def like_track(self, tid):
         URL = 'http://music.163.com/api/song/like'
@@ -98,7 +102,9 @@ def main():
     elif argv[1] == 'td':
         result = api.get_track_detail((int(argv[2]), ))
     elif argv[1] == 'pu':
-        result = api.get_player_url((int(argv[2]), ))
+        result = api.get_player_url((int(argv[2]), ), 3200000)
+    elif argv[1] == 'du':
+        result = api.get_download_url(int(argv[2]), 3200000)
     elif argv[1] == 'li':
         result = api.like_track(int(argv[2]))
     elif argv[1] == 'mta':
