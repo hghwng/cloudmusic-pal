@@ -10,7 +10,7 @@ class Library:
     L = logging.getLogger('Library')
 
     def __init__(self, lib_path, api: NeteaseAPI):
-        Library.L.info('Initialization: lib_path = %s', lib_path)
+        Library.L.debug('Initialization: lib_path = %s', lib_path)
         self._path = os.path.abspath(lib_path)
         self._TRACK_DIR = self._path + '/tracks/'
         self._TMP_DIR = self._path + '/tmp/'
@@ -24,7 +24,7 @@ class Library:
         if os.path.isfile(self._DB_PATH):
             self._db = pickle.load(open(self._DB_PATH, 'rb'))
         else:
-            Library.L.info('Creating empty database')
+            Library.L.debug('Creating empty database')
             self._db = {'playlists': {}, 'local_tracks': {}}
 
     def save(self):
@@ -47,7 +47,7 @@ class Library:
         for meta in api_playlists:
             # Fetch the playlist
             pid = int(meta['id'])
-            Library.L.info('Syncing playlist %s(%d)', meta['name'], pid)
+            Library.L.debug('Syncing playlist %s(%d)', meta['name'], pid)
             detail = self._api.get_playlist_detail(pid)['playlist']
             tids = [t['id'] for t in detail['trackIds']]
             result[pid] = dict()
@@ -94,7 +94,7 @@ class Library:
 
         for tid, size in local_tracks.items():
             if tid not in remote_tids:
-                self.L.warning("Deleted remote track: %d", tid)
+                self.L.info("Deleted remote track: %d", tid)
 
     def download_tracks(self, tids, skipDownloaded=True):
         if skipDownloaded:
