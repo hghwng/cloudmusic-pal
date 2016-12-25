@@ -228,7 +228,45 @@ class Library:
 
 
 def main():
-    pass
+    from sys import argv
+    logging.getLogger().setLevel(logging.INFO)
+    logging.info('Logging started')
+
+    api = NeteaseAPI()
+    api.load_cookie('cookies')
+    lib = Library(argv[1], api)
+    playlists = lib._db['playlists']
+
+    command = argv[2]
+    if command == 'sync':
+        lib.sync(int(argv[3]))
+    elif command == 'scan':
+        lib.scan_tracks()
+    elif command == 'pl_show':
+        for pid, playlist in playlists.items():
+            print(pid, playlist['name'])
+    elif command == 'pl_down':
+        pids = [int(i) for i in argv[3:]]
+        if not pids:
+            pids = playlists.keys()
+        for pid in pids:
+            playlist = playlists[pid]
+            print(pid, playlist['name'])
+            lib.download_tracks(playlist['tids'],
+                                Library.DOWNLOAD_STRATEGY_MISSING,
+                                Library.DOWNLOAD_SOURCE_DOWNLOAD)
+            # Save in case the download progress crashes
+            lib.save()
+    elif command == 'm3u':
+        for pid, playlist in playlists.items():
+            print(pid, playlist['name'])
+            lib.create_playlist(pid)
+    else:
+        print('Usage: DB_PATH COMMAND')
+        print('COMMAND: sync UID | pl_show | PL_DOWN_COMMAND | m3u')
+        print('PL_DOWN_COMMAND: pl_down | pl_down PIDS')
+        print('PIDS: PID PIDS | PID')
+    lib.save()
 
 
 if __name__ == '__main__':
