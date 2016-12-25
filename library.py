@@ -9,6 +9,11 @@ from api import NeteaseAPI
 class Library:
     L = logging.getLogger('Library')
 
+    DOWNLOAD_STRATEGY_MISSING = 0
+    DOWNLOAD_STRATEGY_UPGRADE = 1
+    DOWNLOAD_SOURCE_PLAY = 0
+    DOWNLOAD_SOURCE_DOWNLOAD = 1
+
     def __init__(self, lib_path, api: NeteaseAPI):
         Library.L.debug('Initialization: lib_path = %s', lib_path)
         self._path = os.path.abspath(lib_path)
@@ -96,32 +101,99 @@ class Library:
             if tid not in remote_tids:
                 self.L.info("Deleted remote track: %d", tid)
 
-    def download_tracks(self, tids, skipDownloaded=True):
-        if skipDownloaded:
-            tids = list(set(tids) - set(self._db['local_tracks'].keys()))
-        urls = self._api.get_player_url(tids)['data']
-        urls = {t['id']: t for t in urls}
-        details = self._api.get_track_detail(tids)['songs']
-        details = {t['id']: t for t in details}
-        print(tids)
+    def _download_track(self, tid, file_info, meta):
+        size, url, ext = file_info['size'], file_info['url'], file_info['type']
+        if url is None:
+            Library.L.warning('Download failed: %s: %s', tid, meta['name'])
+            return False
+        Library.L.info('Downloading %s: %s, size = %d', tid, meta['name'], size)
 
-        for idx, tid in enumerate(tids):
-            detail = details[tid]
-            size, url, ext = urls[tid]['size'], urls[tid]['url'], urls[tid]['type']
-            if url is None:
-                Library.L.critical('Download failed: %s(%s)', detail['name'], tid)
-                continue
-            Library.L.info('Downloading %d/%d, %s: %s, size = %d', idx + 1, len(tids),
-                           tid, detail['name'], size)
-            tmp_path = self._TMP_DIR + str(tid) + '.' + ext
-            Library.download_file(url, tmp_path)
-            Library.L.debug('Tagging %s', tid)
-            Library.tag(tmp_path, detail)
+        tmp_path = self._TMP_DIR + str(tid) + '.' + ext
+        Library.download_file(url, tmp_path)
+        Library.L.debug('Tagging %s', tid)
+        Library.tag(tmp_path, meta)
 
-            path = self._TRACK_DIR + str(tid) + '.' + ext
-            os.rename(tmp_path, path)
-            local_track = dict(size=os.path.getsize(path), ext=ext)
-            self._db['local_tracks'][tid] = local_track
+        if tid in self._db['local_tracks']:
+            prev_path = self._TRACK_DIR + str(tid) + '.' + self._db['local_tracks'][tid]['ext']
+            os.remove(prev_path)
+        new_path = self._TRACK_DIR + str(tid) + '.' + ext
+        os.rename(tmp_path, new_path)
+        local_track = dict(size=os.path.getsize(new_path), ext=ext, bitrate=file_info['br'])
+        self._db['local_tracks'][tid] = local_track
+        return True
+
+    def _get_download_info(self, tids, strategy, source):
+        local_tracks = self._db['local_tracks']
+        # Skip tracks already downloaded: don't fetch the song's detail
+        if strategy == Library.DOWNLOAD_STRATEGY_MISSING:
+            tids = list(set(tids) - set(local_tracks.keys()))
+        details_api = self._api.get_track_detail(tids)
+        details = {t['id']: dict(meta=t) for t in details_api['songs']}
+        for priv in details_api['privileges']:
+            details[priv['id']]['priv'] = priv
+
+        list_download = list()
+        list_play = list()
+        for tid in tids:
+            bitrate_local = 0
+            if tid in local_tracks:
+                if local_tracks[tid]['ext'] != 'mp3':
+                    bitrate_local = 999000
+                else:
+                    bitrate_local = local_tracks[tid]['bitrate']
+
+            meta, priv = details[tid]['meta'], details[tid]['priv']
+            method = 0
+            bitrate_fetch = bitrate_local
+            # Check play bitrate first; prefer the play API when both APIs show the same bitrate
+            if bitrate_fetch < priv['pl']:
+                method = 1
+                bitrate_fetch = priv['pl']
+            # Check download bitrate after
+            if source == Library.DOWNLOAD_SOURCE_DOWNLOAD and \
+               bitrate_fetch < priv['dl']:
+                method = 2
+                bitrate_fetch = priv['dl']
+
+            # Check for possible higher bitrates
+            if bitrate_fetch < priv['maxbr']:
+                Library.L.info("Better quality for %d: %s, local = %d, fetch = %d, max = %d",
+                               tid, meta['name'], bitrate_local, bitrate_fetch, priv['maxbr'])
+            if method != 0:
+                Library.L.info("Upgrade(%s) quality for %d: %s, local = %d, fetch = %d, max = %d",
+                               {1: "play", 2: "download"}[method],
+                               tid, meta['name'], bitrate_local, bitrate_fetch, priv['maxbr'])
+            if method == 1:
+                list_play.append(tid)
+            elif method == 2:
+                list_download.append((tid, bitrate_fetch))
+        return details, list_play, list_download
+
+    def download_tracks(self, tids, strategy=None, source=None):
+        strategy = Library.DOWNLOAD_STRATEGY_MISSING if strategy is None else strategy
+        source = Library.DOWNLOAD_SOURCE_PLAY if strategy is None else source
+        if not tids:
+            return
+        details, list_play, list_download = self._get_download_info(tids, strategy, source)
+
+        num_total = len(list_play) + len(list_download)
+        if num_total == 0:
+            return
+
+        num_processed = 1
+        # Download play urls in batch
+        for file_info in self._api.get_player_url(list_play)['data']:
+            tid = file_info['id']
+            Library.L.info("Download progress: %d/%d", num_processed, num_total)
+            self._download_track(tid, file_info, details[tid]['meta'])
+            num_processed += 1
+
+        # Download API doesn't support batch mode, download one by one
+        for tid, bitrate in list_download:
+            file_info = self._api.get_download_url(tid, bitrate)['data']
+            Library.L.info("Download progress: %d/%d", num_processed, num_total)
+            self._download_track(tid, file_info, details[tid]['meta'])
+            num_processed += 1
 
     @staticmethod
     def tag(path, detail):
