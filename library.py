@@ -126,7 +126,7 @@ class Library:
 
         size, url, ext = file_info['size'], file_info['url'], file_info['type']
         if url is None:
-            Library.L.warning('Download failed: %s: %s', tid, meta['name'])
+            Library.L.warning('Download unavailable: %s: %s', tid, meta['name'])
             return False
         Library.L.info('Downloading %s: %s, size = %d', tid, meta['name'], size)
 
