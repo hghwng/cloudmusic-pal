@@ -6,6 +6,16 @@ import requests
 from api import NeteaseAPI
 
 
+# Copyright: Fred Cirera
+# URL: http://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
+def _size_format(num, suffix='B'):
+    for unit in ('', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi'):
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
 class Library:
     L = logging.getLogger('Library')
 
@@ -94,8 +104,9 @@ class Library:
         for tid, track in local_tracks.items():
             if tid in scan:
                 if track['size'] != scan[tid]['size']:
-                    self.L.debug("Changed local track: %d (%d -> %d)",
-                                tid, track['size'], scan[tid]['size'])
+                    self.L.debug("Changed local track: %d (%s → %s)",
+                                 tid, _size_format(track['size']),
+                                 _size_format(scan[tid]['size']))
                     changed_tracks.add(tid)
             else:
                 self.L.debug("Deleted local track: %d", tid)
@@ -128,7 +139,7 @@ class Library:
         if url is None:
             Library.L.warning('Download unavailable: %s: %s', tid, meta['name'])
             return False
-        Library.L.info('Downloading %s: %s, size = %d', tid, meta['name'], size)
+        Library.L.info('Downloading %s: %s, %s', tid, meta['name'], _size_format(size))
 
         tmp_path = self._TMP_DIR + str(tid) + '.' + ext
         Library.download_file(url, tmp_path)
