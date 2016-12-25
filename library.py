@@ -122,6 +122,8 @@ class Library:
                 self.L.info("Deleted remote track: %d", tid)
 
     def _download_track(self, tid, file_info, meta):
+        import hashlib
+
         size, url, ext = file_info['size'], file_info['url'], file_info['type']
         if url is None:
             Library.L.warning('Download failed: %s: %s', tid, meta['name'])
@@ -130,6 +132,15 @@ class Library:
 
         tmp_path = self._TMP_DIR + str(tid) + '.' + ext
         Library.download_file(url, tmp_path)
+        if os.path.getsize(tmp_path) != file_info['size']:
+            Library.L.error('Download failed (size not matching): %s: %s', tid, meta['name'])
+            os.remove(tmp_path)
+            return False
+        if file_info['md5'] != hashlib.md5(open(tmp_path, 'rb').read()).hexdigest():
+            Library.L.error('Download failed (md5 not matching): %s: %s', tid, meta['name'])
+            os.remove(tmp_path)
+            return False
+
         Library.L.debug('Tagging %s', tid)
         Library.tag(tmp_path, meta)
 
@@ -138,6 +149,7 @@ class Library:
             os.remove(prev_path)
         new_path = self._TRACK_DIR + str(tid) + '.' + ext
         os.rename(tmp_path, new_path)
+
         local_track = dict(size=os.path.getsize(new_path), ext=ext, bitrate=file_info['br'])
         self._db['local_tracks'][tid] = local_track
         return True
