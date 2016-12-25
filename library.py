@@ -65,6 +65,7 @@ class Library:
         scan = dict()
         for filename in os.listdir(self._TRACK_DIR):
             tid, ext = tuple(os.path.splitext(filename))
+            ext = ext[1:]
             size = os.path.getsize(self._TRACK_DIR + filename)
             try:
                 tid = int(tid)
@@ -75,22 +76,28 @@ class Library:
 
         # Maintain local tracks db
         # Remove files not in file system
-        deleted_tracks = set()
+        changed_tracks = set()
         local_tracks = self._db['local_tracks']
         for tid, track in local_tracks.items():
-            if tid not in scan:
-                deleted_tracks.add(tid)
+            if tid in scan:
+                if track['size'] != scan[tid]['size']:
+                    self.L.debug("Changed local track: %d (%d -> %d)",
+                                tid, track['size'], scan[tid]['size'])
+                    changed_tracks.add(tid)
             else:
-                track['size'] = scan[tid]
-        for tid in deleted_tracks:
-            self.L.info("Deleted local track: %d", tid)
+                self.L.debug("Deleted local track: %d", tid)
+                changed_tracks.add(tid)
+        for tid in changed_tracks:
             del local_tracks[tid]
 
         # Add files not in db
-        for tid, size in scan.items():
+        for tid, info in scan.items():
             if tid not in local_tracks:
-                self.L.info("Manually added local track: %d", tid)
-                local_tracks[tid] = dict(size=size)
+                path = self._TRACK_DIR + str(tid) + '.' + info['ext']
+                local_tracks[tid] = info
+                local_tracks[tid]['bitrate'] = taglib.File(path).bitrate * 1000
+                self.L.debug("Manually added local track: %d, bitrate = %d",
+                             tid, local_tracks[tid]['bitrate'])
 
         # Show redundant files
         remote_tids = list()
