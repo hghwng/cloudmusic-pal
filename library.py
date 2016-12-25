@@ -45,20 +45,33 @@ class Library:
 
     def sync(self, uid):
         Library.L.info('Syncing for user %d', uid)
-        result = dict()
-        self._db['playlists'] = result
+        local_playlists = self._db['playlists']
 
-        api_playlists = self._api.get_user_playlist(uid)['playlist']
-        for meta in api_playlists:
-            # Fetch the playlist
-            pid = int(meta['id'])
-            Library.L.debug('Syncing playlist %s(%d)', meta['name'], pid)
-            detail = self._api.get_playlist_detail(pid)['playlist']
-            tids = [t['id'] for t in detail['trackIds']]
-            result[pid] = dict()
-            result[pid]['name'] = meta['name']
-            result[pid]['tids'] = tids
-            result[pid]['raw'] = detail
+        remote_pids = set()
+        remote_playlists = self._api.get_user_playlist(uid)['playlist']
+        for remote_meta in remote_playlists:
+            pid = remote_meta['id']
+            remote_pids.add(pid)
+
+            should_fetch = False
+            if pid not in local_playlists:
+                Library.L.info('Syncing new playlist %s(%d)', remote_meta['name'], pid)
+                should_fetch = True
+            elif local_playlists[pid]['raw']['updateTime'] != remote_meta['updateTime']:
+                Library.L.info('Syncing out-of-date playlist %s(%d)', remote_meta['name'], pid)
+                should_fetch = True
+
+            if should_fetch:
+                detail = self._api.get_playlist_detail(pid)['playlist']
+                playlist = {'name': remote_meta['name'], 'raw': detail}
+                playlist['tids'] = [t['id'] for t in detail['trackIds']]
+                local_playlists[pid] = playlist
+
+        for pid in set(local_playlists.keys()) - remote_pids:
+            Library.L.info('Removing redundant playlist %s(%d)',
+                           local_playlists[pid]['name'], pid)
+            del local_playlists[pid]
+
 
     def scan_tracks(self):
         # Scan current local tracks
