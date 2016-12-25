@@ -252,7 +252,7 @@ class Library:
 
     def create_playlist(self, pid):
         playlist = self._db['playlists'][pid]
-        m3u_path = self._PLAYLIST_DIR + playlist['name'] + '.m3u'
+        m3u_path = self._PLAYLIST_DIR + playlist['name'].replace('/', '／') + '.m3u'
         m3u_file = open(m3u_path, 'w')
         local_tracks = self._db['local_tracks']
         for tid in playlist['tids']:
