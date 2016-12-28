@@ -246,7 +246,7 @@ class Library:
         Library.L.info('Radio: started fetching')
         while len(tracks) < num_pull:
             tracks.extend(self._api.get_radio()['data'])
-            Library.L.debug('Radio: fetched {}/{}'.format(len(tracks), num_pull))
+            Library.L.debug('Radio: fetched %d/%d', len(tracks), num_pull)
         tracks = tracks[:num_pull + 1]
         tids = [track['id'] for track in tracks]
 
