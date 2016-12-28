@@ -82,6 +82,12 @@ class NeteaseAPI:
         URL = 'http://music.163.com/api/v1/radio/get'
         return self.request(URL, dict())
 
+    def trash_radio(self, tid, mode='trash', time=0, alg='alternate'):
+        SKIP_URL = 'http://music.163.com/api/v1/radio/skip'
+        TRASH_URL = 'http://music.163.com/api/radio/trash/add'
+        URL = TRASH_URL if mode == 'trash' else SKIP_URL
+        return self.request(URL, dict(alg=alg, songId=str(tid), time=str(time)))
+
     def do_daily_task(self, type_):
         URL = 'http://music.163.com/api/point/dailyTask'
         return self.request(URL, dict(type=type_))
@@ -117,6 +123,10 @@ def main():
         result = api.manipulate_playlist_tracks(int(argv[2]), (int(argv[3]),), 'del')
     elif argv[1] == 'rg':
         result = api.get_radio()
+    elif argv[1] == 'rt':
+        result = api.trash_radio(int(argv[2]))
+    elif argv[1] == 'rs':
+        result = api.trash_radio(int(argv[2]), mode='skip')
     elif argv[1] == 'd':
         result = NeteaseAPI.decrypt(input())
     else:
