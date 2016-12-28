@@ -238,6 +238,21 @@ class Library:
             self._download_track(tid, file_info, details[tid]['meta'])
             num_processed += 1
 
+    def pull_radio(self, num_pull=3, source=None):
+        if source is None:
+            source = Library.DOWNLOAD_SOURCE_PLAY
+
+        tracks = list()
+        Library.L.info('Radio: started fetching')
+        while len(tracks) < num_pull:
+            tracks.extend(self._api.get_radio()['data'])
+            Library.L.debug('Radio: fetched {}/{}'.format(len(tracks), num_pull))
+        tracks = tracks[:num_pull + 1]
+        tids = [track['id'] for track in tracks]
+
+        self.download_tracks(tids, Library.DOWNLOAD_STRATEGY_MISSING, source)
+        self._save_tids('Radio', tids)
+
     @staticmethod
     def tag(path, detail):
         tagfile = taglib.File(path)
@@ -250,17 +265,20 @@ class Library:
         tagfile.tags['TRACKNUMBER'] = str(detail['no'])
         tagfile.save()
 
-    def create_playlist(self, pid):
-        playlist = self._db['playlists'][pid]
-        m3u_path = self._PLAYLIST_DIR + playlist['name'].replace('/', '／') + '.m3u'
+    def _save_tids(self, title: str, tids: list):
+        m3u_path = self._PLAYLIST_DIR + title.replace('/', '／') + '.m3u'
         m3u_file = open(m3u_path, 'w')
         local_tracks = self._db['local_tracks']
-        for tid in playlist['tids']:
+        for tid in tids:
             if tid in local_tracks:
                 path = self._TRACK_DIR + str(tid) + '.' + local_tracks[tid]['ext']
                 m3u_file.write(path + '\n')
             else:
                 Library.L.warning('Missing file for track %d', tid)
+
+    def save_playlist(self, pid):
+        playlist = self._db['playlists'][pid]
+        self._save_tids(playlist['tids'], playlist['name'])
 
 
 def main():
@@ -278,6 +296,8 @@ def main():
         lib.sync(int(argv[3]))
     elif command == 'scan':
         lib.scan_tracks()
+    elif command == 'radio_pull':
+        lib.pull_radio(argv[3] if len(argv) > 3 else 10)
     elif command == 'pl_show':
         for pid, playlist in playlists.items():
             print(pid, playlist['name'])
