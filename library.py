@@ -278,7 +278,7 @@ class Library:
 
     def save_playlist(self, pid):
         playlist = self._db['playlists'][pid]
-        self._save_tids(playlist['tids'], playlist['name'])
+        self._save_tids(playlist['name'], playlist['tids'])
 
 
 def main():
@@ -316,7 +316,7 @@ def main():
     elif command == 'm3u':
         for pid, playlist in playlists.items():
             print(pid, playlist['name'])
-            lib.create_playlist(pid)
+            lib.save_playlist(pid)
     else:
         print('Usage: DB_PATH COMMAND')
         print('COMMAND: sync UID | pl_show | PL_DOWN_COMMAND | m3u')
