@@ -220,16 +220,19 @@ class Library:
         details, list_play, list_download = self._get_download_info(tids, strategy, source)
 
         num_total = len(list_play) + len(list_download)
-        if num_total == 0:
-            return
-
         num_processed = 1
-        # Download play urls in batch
-        for file_info in self._api.get_player_url(list_play)['data']:
-            tid = file_info['id']
-            Library.L.info("Download progress: %d/%d", num_processed, num_total)
-            self._download_track(tid, file_info, details[tid]['meta'])
-            num_processed += 1
+
+        while list_play:
+            # Download play urls in batch
+            for file_info in self._api.get_player_url(list_play)['data']:
+                tid = file_info['id']
+                Library.L.info("Download progress: %d/%d", num_processed, num_total)
+                if self._download_track(tid, file_info, details[tid]['meta']):
+                    num_processed += 1
+                    list_play.remove(tid)
+                else:
+                    Library.L.warning("Retry: fetch the player URL again in case of timeout")
+                    break
 
         # Download API doesn't support batch mode, download one by one
         for tid, bitrate in list_download:
