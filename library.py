@@ -170,6 +170,8 @@ class Library:
         # Skip tracks already downloaded: don't fetch the song's detail
         if strategy == Library.DOWNLOAD_STRATEGY_MISSING:
             tids = list(set(tids) - set(local_tracks.keys()))
+        if not tids:
+            return dict(), list(), list()
         details_api = self._api.get_track_detail(tids)
         details = {t['id']: dict(meta=t) for t in details_api['songs']}
         for priv in details_api['privileges']:
@@ -215,8 +217,6 @@ class Library:
     def download_tracks(self, tids, strategy=None, source=None):
         strategy = Library.DOWNLOAD_STRATEGY_MISSING if strategy is None else strategy
         source = Library.DOWNLOAD_SOURCE_PLAY if strategy is None else source
-        if not tids:
-            return
         details, list_play, list_download = self._get_download_info(tids, strategy, source)
 
         num_total = len(list_play) + len(list_download)
