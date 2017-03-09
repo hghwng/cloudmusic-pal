@@ -184,6 +184,9 @@ class Library:
             if priv['id'] not in details:
                 Library.L.warn('Unknown track %d, excluding from download list', priv['id'])
                 tids.remove(priv['id'])
+            if priv.get('st', 0) < 0:
+                Library.L.warn('Disabled track %d (status = %d), excluding from download list', priv['id'], priv['st'])
+                tids.remove(priv['id'])
             else:
                 details[priv['id']]['priv'] = priv
 
