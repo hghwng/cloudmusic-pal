@@ -118,9 +118,9 @@ def main():
     elif argv[1] == 'li':
         result = api.like_track(int(argv[2]))
     elif argv[1] == 'mta':
-        result = api.manipulate_playlist_tracks(int(argv[2]), (int(argv[3]),), 'add')
+        result = api.manipulate_playlist_tracks(int(argv[2]), [int(t) for t in argv[3:]], 'add')
     elif argv[1] == 'mtd':
-        result = api.manipulate_playlist_tracks(int(argv[2]), (int(argv[3]),), 'del')
+        result = api.manipulate_playlist_tracks(int(argv[2]), [int(t) for t in argv[3:]], 'del')
     elif argv[1] == 'rg':
         result = api.get_radio()
     elif argv[1] == 'rt':
