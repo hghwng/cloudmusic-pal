@@ -124,13 +124,16 @@ class Library:
                              tid, local_tracks[tid]['bitrate'])
 
         # Show redundant files
-        remote_tids = list()
+        remote_tracks = set()
         for playlist in self._db['playlists'].values():
-            remote_tids.extend(playlist['tids'])
+            remote_tracks.update(playlist['tids'])
 
-        for tid, size in local_tracks.items():
-            if tid not in remote_tids:
-                self.L.info("Deleted remote track: %d", tid)
+        redundant_tracks = set(local_tracks.keys()).difference(remote_tracks)
+        for tid in redundant_tracks:
+            self.L.info("Deleted remote track: %d", tid)
+
+        return changed_tracks, redundant_tracks
+
 
     def _download_track(self, tid, file_info, meta):
         import hashlib
