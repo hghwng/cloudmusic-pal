@@ -300,13 +300,20 @@ def main():
     logging.info('Logging started')
 
     api = NeteaseAPI()
+    dbpath = argv[1]
     api.load_cookie('cookies')
-    lib = Library(argv[1], api)
+    lib = Library(dbpath, api)
     playlists = lib._db['playlists']
+    local_tracks = lib._db['local_tracks']
 
     command = argv[2]
     if command == 'sync':
         lib.sync(int(argv[3]))
+    elif command == 'cleanup':
+        import os
+        _, redundant = lib.scan_tracks()
+        for tid in redundant:
+            os.remove(dbpath + '/tracks/' + str(tid) + '.' + local_tracks[tid]['ext'])
     elif command == 'scan':
         lib.scan_tracks()
     elif command == 'radio_pull':
