@@ -190,6 +190,11 @@ class Library:
             else:
                 details[priv['id']]['priv'] = priv
 
+        # Fix invalid tracks with no metadata. See 16611839
+        for tid in tids.difference(details.keys()):
+            Library.L.warn('Unknown track %d, excluding from download list', priv['id'])
+            tids.discard(tid)
+
         list_download = list()
         list_play = list()
         for tid in tids:
