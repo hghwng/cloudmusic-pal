@@ -172,21 +172,21 @@ class Library:
         local_tracks = self._db['local_tracks']
         # Skip tracks already downloaded: don't fetch the song's detail
         if strategy == Library.DOWNLOAD_STRATEGY_MISSING:
-            tids = list(set(tids) - set(local_tracks.keys()))
+            tids = set(tids) - set(local_tracks.keys())
         else:
-            tids = list(tids)
+            tids = set(tids)  # don't change the caller's data
         if not tids:
             return dict(), list(), list()
 
-        details_api = self._api.get_track_detail(tids)
+        details_api = self._api.get_track_detail(list(tids))
         details = {t['id']: dict(meta=t) for t in details_api['songs']}
         for priv in details_api['privileges']:
             if priv['id'] not in details:
                 Library.L.warn('Unknown track %d, excluding from download list', priv['id'])
-                tids.remove(priv['id'])
+                tids.discard(priv['id'])
             if priv.get('st', 0) < 0:
                 Library.L.warn('Disabled track %d (status = %d), excluding from download list', priv['id'], priv['st'])
-                tids.remove(priv['id'])
+                tids.discard(priv['id'])
             else:
                 details[priv['id']]['priv'] = priv
 
