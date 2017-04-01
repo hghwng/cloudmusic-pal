@@ -137,7 +137,6 @@ class Library:
 
     def _download_track(self, tid, file_info, meta):
         import hashlib
-
         size, url, ext = file_info['size'], file_info['url'], file_info['type']
         if url is None:
             Library.L.warning('Download unavailable: %s: %s', tid, meta['name'])
@@ -302,55 +301,63 @@ class Library:
         self._save_tids(playlist['name'], playlist['tids'])
 
 
-def main():
-    from sys import argv
-    logging.getLogger().setLevel(logging.INFO)
-    logging.info('Logging started')
+class LibraryCli(object):
+    def __init__(self, dbpath, cookies="cookies"):
+        self._api = NeteaseAPI()
+        self._dbpath = dbpath
+        self._api.load_cookie(cookies)
+        self._lib = Library(dbpath, self._api)
+        self._playlists = self._lib._db['playlists']
+        self._local_tracks = self._lib._db['local_tracks']
 
-    api = NeteaseAPI()
-    dbpath = argv[1]
-    api.load_cookie('cookies')
-    lib = Library(dbpath, api)
-    playlists = lib._db['playlists']
-    local_tracks = lib._db['local_tracks']
+    def sync(self, uid):
+        self._lib.sync(uid)
 
-    command = argv[2]
-    if command == 'sync':
-        lib.sync(int(argv[3]))
-    elif command == 'cleanup':
+    def cleanup(self):
         import os
-        _, redundant = lib.scan_tracks()
+        _, redundant = self._lib.scan_tracks()
         for tid in redundant:
-            os.remove(dbpath + '/tracks/' + str(tid) + '.' + local_tracks[tid]['ext'])
-    elif command == 'scan':
-        lib.scan_tracks()
-    elif command == 'radio_pull':
-        lib.pull_radio(argv[3] if len(argv) > 3 else 10)
-    elif command == 'pl_show':
-        for pid, playlist in playlists.items():
+            os.remove(self._dbpath + '/tracks/' + str(tid) + '.' +
+                      self._local_tracks[tid]['ext'])
+
+    def scan(self):
+        self._lib.scan_tracks()
+
+    def radio_pull(self, num_pull=3, source=None):
+        self._lib.pull_radio(num_pull, source)
+
+    def pl_show(self):
+        for pid, playlist in self._playlists.items():
             print(pid, playlist['name'])
-    elif command == 'pl_down':
-        pids = [int(i) for i in argv[3:]]
+
+    def pl_down(self, *pids):
+        pids = list(pids)
         if not pids:
-            pids = playlists.keys()
+            pids = self._playlists.keys()
         for pid in pids:
-            playlist = playlists[pid]
+            playlist = self._playlists[pid]
             print(pid, playlist['name'])
-            lib.download_tracks(playlist['tids'],
+            self._lib.download_tracks(playlist['tids'],
                                 Library.DOWNLOAD_STRATEGY_MISSING,
                                 Library.DOWNLOAD_SOURCE_DOWNLOAD)
             # Save in case the download progress crashes
-            lib.save()
-    elif command == 'm3u':
-        for pid, playlist in playlists.items():
+            self._lib.save()
+
+    def m3u(self):
+        for pid, playlist in self._playlists.items():
             print(pid, playlist['name'])
-            lib.save_playlist(pid)
-    else:
-        print('Usage: DB_PATH COMMAND')
-        print('COMMAND: sync UID | pl_show | PL_DOWN_COMMAND | m3u')
-        print('PL_DOWN_COMMAND: pl_down | pl_down PIDS')
-        print('PIDS: PID PIDS | PID')
-    lib.save()
+            self._lib.save_playlist(pid)
+
+
+def main():
+    try:
+        import fire
+        logging.getLogger().setLevel(logging.INFO)
+        logging.info('Logging started')
+
+        fire.Fire(LibraryCli)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == '__main__':
