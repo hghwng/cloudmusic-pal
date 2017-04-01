@@ -4,6 +4,7 @@ import json
 import requests
 from Crypto.Cipher import AES
 
+
 class NeteaseAPI:
     AES_OBJ = AES.new(bytes('rFgB&h#%2?^eDg:Q', 'UTF-8'))
     API_URL = 'http://music.163.com/api/linux/forward'
@@ -93,48 +94,36 @@ class NeteaseAPI:
         return self.request(URL, dict(type=type_))
 
 
+class NeteaseApiCli(NeteaseAPI):
+    def __init__(self, cookies="cookies"):
+        super(NeteaseApiCli, self).__init__()
+        import os
+        if os.path.isfile(cookies):
+            self.load_cookie(cookies)
+
+    def dump_user_cookies(self, cellphone, password, path="cookies"):
+        self.login_cellphone(cellphone, password)
+        self.dump_cookie(path)
+
+    def get_player_url(self, tids, bitrate=3200000):
+        return super(NeteaseApiCli, self).get_player_url(int(tids), bitrate)
+
+    def get_download_url(self, tid, bitrate=3200000):
+        return super(NeteaseApiCli, self).get_download_url(int(tid), bitrate)
+
+    def add_songs_to_list(self, pid, *tids):
+        return self.manipulate_playlist_tracks(pid, list(map(int, tids)), 'add')
+
+    def delete_songs_from_list(self, pid, *tids):
+        return self.manipulate_playlist_tracks(pid, list(map(int, tids)), 'del')
+
+    def skip_radio(self, tid):
+        return self.trash_radio(tid, mode='skip')
+
+
 def main():
-    from sys import argv
-    import os
-    api = NeteaseAPI()
-    if os.path.isfile('cookies'):
-        api.load_cookie('cookies')
-
-    result = None
-    if argv[1] == 'l':
-        result = api.login_cellphone(argv[2], argv[3])
-    if argv[1] == 'dt':
-        result = api.do_daily_task(int(argv[2]))
-    elif argv[1] == 'up':
-        result = api.get_user_playlist(int(argv[2]))
-    elif argv[1] == 'pd':
-        result = api.get_playlist_detail(int(argv[2]))
-    elif argv[1] == 'td':
-        result = api.get_track_detail((int(argv[2]), ))
-    elif argv[1] == 'pu':
-        result = api.get_player_url((int(argv[2]), ), 3200000)
-    elif argv[1] == 'du':
-        result = api.get_download_url(int(argv[2]), 3200000)
-    elif argv[1] == 'li':
-        result = api.like_track(int(argv[2]))
-    elif argv[1] == 'mta':
-        result = api.manipulate_playlist_tracks(int(argv[2]), [int(t) for t in argv[3:]], 'add')
-    elif argv[1] == 'mtd':
-        result = api.manipulate_playlist_tracks(int(argv[2]), [int(t) for t in argv[3:]], 'del')
-    elif argv[1] == 'rg':
-        result = api.get_radio()
-    elif argv[1] == 'rt':
-        result = api.trash_radio(int(argv[2]))
-    elif argv[1] == 'rs':
-        result = api.trash_radio(int(argv[2]), mode='skip')
-    elif argv[1] == 'd':
-        result = NeteaseAPI.decrypt(input())
-    else:
-        print('Invalid')
-
-    import pprint
-    pprint.pprint(result)
-    api.dump_cookie('cookies')
+    import fire
+    fire.Fire(NeteaseApiCli)
 
 
 if __name__ == '__main__':
