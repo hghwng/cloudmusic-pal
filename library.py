@@ -302,13 +302,18 @@ class Library:
 
 
 class LibraryCli(object):
-    def __init__(self, dbpath, cookies="cookies"):
+    def __init__(self, db_path, cookies_path="cookies"):
+        self._cookies_name = cookies_path
         self._api = NeteaseAPI()
-        self._dbpath = dbpath
-        self._api.load_cookie(cookies)
-        self._lib = Library(dbpath, self._api)
+        self._api.load_cookie(self._cookies_name)
+        self._db_path = db_path
+        self._lib = Library(db_path, self._api)
         self._playlists = self._lib._db['playlists']
         self._local_tracks = self._lib._db['local_tracks']
+
+    def __del__(self):
+        self._api.dump_cookie(self._cookies_name)
+        self._lib.save()
 
     def sync(self, uid):
         self._lib.sync(uid)
@@ -317,7 +322,7 @@ class LibraryCli(object):
         import os
         _, redundant = self._lib.scan_tracks()
         for tid in redundant:
-            os.remove(self._dbpath + '/tracks/' + str(tid) + '.' +
+            os.remove(self._db_path + '/tracks/' + str(tid) + '.' +
                       self._local_tracks[tid]['ext'])
 
     def scan(self):
