@@ -6,8 +6,8 @@ from Crypto.Cipher import AES
 
 
 class NeteaseAPI:
-    AES_OBJ = AES.new(bytes('rFgB&h#%2?^eDg:Q', 'UTF-8'), AES.MODE_ECB)
-    API_URL = 'http://music.163.com/api/linux/forward'
+    _AES_OBJ = AES.new(bytes('rFgB&h#%2?^eDg:Q', 'UTF-8'), AES.MODE_ECB)
+    _API_URL = 'http://music.163.com/api/linux/forward'
 
     def __init__(self):
         self.req = requests.Session()
@@ -17,7 +17,7 @@ class NeteaseAPI:
 
     @staticmethod
     def decrypt(data: str) -> dict:
-        text = NeteaseAPI.AES_OBJ.decrypt(base64.b16decode(data))
+        text = NeteaseAPI._AES_OBJ.decrypt(base64.b16decode(data))
         pad_length = text[-1]
         text = text[:-pad_length]
         return json.loads(str(text, 'UTF-8'))
@@ -27,12 +27,12 @@ class NeteaseAPI:
         data_bytes = bytes(json.dumps(data), 'UTF-8')
         pad_length = (len(data_bytes) // 16 + 1) * 16 - len(data_bytes)
         data_bytes += bytes((pad_length,)) * pad_length
-        return base64.b16encode(NeteaseAPI.AES_OBJ.encrypt(data_bytes))
+        return base64.b16encode(NeteaseAPI._AES_OBJ.encrypt(data_bytes))
 
     def request(self, url, params, method='POST'):
         payload_dict = dict(url=url, method=method, params=params)
         payload_bytes = NeteaseAPI.encrypt(payload_dict)
-        response = self.req.post(NeteaseAPI.API_URL, {'eparams': payload_bytes})
+        response = self.req.post(NeteaseAPI._API_URL, {'eparams': payload_bytes})
         return json.loads(response.text)
 
     def dump_cookie(self, path):
