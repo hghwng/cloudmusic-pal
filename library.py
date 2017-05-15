@@ -67,9 +67,15 @@ class Library:
             if pid not in local_playlists:
                 Library.L.info('Syncing new playlist %s(%d)', remote_meta['name'], pid)
                 should_fetch = True
-            elif local_playlists[pid]['raw']['updateTime'] != remote_meta['updateTime']:
-                Library.L.info('Syncing out-of-date playlist %s(%d)', remote_meta['name'], pid)
-                should_fetch = True
+            else:
+                local_playlist = local_playlists[pid]
+                if local_playlist['raw']['updateTime'] != remote_meta['updateTime']:
+                    Library.L.info('Syncing out-of-date playlist %s(%d)', remote_meta['name'], pid)
+                    should_fetch = True
+                elif local_playlist['name'] != remote_meta['name']:
+                    Library.L.info('Renaming playlist %s -> %s (%d)',
+                                   remote_meta['name'], local_playlist['name'], pid)
+                    local_playlist['name'] = remote_meta['name']
 
             if should_fetch:
                 detail = self._api.get_playlist_detail(pid)['playlist']
