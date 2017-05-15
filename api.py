@@ -101,10 +101,10 @@ class NeteaseApiCli(NeteaseAPI):
         import os
         if os.path.isfile(cookies):
             self.load_cookie(cookies)
+        self._cookies = cookies
 
-    def dump_user_cookies(self, cellphone, password, path="cookies"):
-        self.login_cellphone(cellphone, password)
-        self.dump_cookie(path)
+    def __del__(self):
+        self.dump_cookie(self._cookies)
 
     def get_player_url(self, tids, bitrate=3200000):
         return super(NeteaseApiCli, self).get_player_url(int(tids), bitrate)
