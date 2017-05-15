@@ -6,7 +6,7 @@ from Crypto.Cipher import AES
 
 
 class NeteaseAPI:
-    AES_OBJ = AES.new(bytes('rFgB&h#%2?^eDg:Q', 'UTF-8'))
+    AES_OBJ = AES.new(bytes('rFgB&h#%2?^eDg:Q', 'UTF-8'), AES.MODE_ECB)
     API_URL = 'http://music.163.com/api/linux/forward'
 
     def __init__(self):
@@ -19,7 +19,8 @@ class NeteaseAPI:
     def decrypt(data: str) -> dict:
         text = NeteaseAPI.AES_OBJ.decrypt(base64.b16decode(data))
         pad_length = text[-1]
-        return json.loads(str(text[:-pad_length], 'UTF-8'))
+        text = text[:-pad_length]
+        return json.loads(str(text, 'UTF-8'))
 
     @staticmethod
     def encrypt(data: dict) -> str:
