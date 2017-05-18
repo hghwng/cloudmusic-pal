@@ -47,7 +47,7 @@ class NeteaseAPI:
         import hashlib
         URL = 'http://music.163.com/api/login/cellphone'
         md5sum = hashlib.md5(bytes(password, 'UTF-8')).hexdigest()
-        payload = dict(password=md5sum, https=True, remember=True, phone=phone, type=1)
+        payload = dict(password=md5sum, https="true", remember="true", phone=phone, type=1)
         return self.request(URL, payload)
 
     def get_user_playlist(self, uid, limit=1000, offset=0):
