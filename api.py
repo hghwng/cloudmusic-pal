@@ -106,6 +106,9 @@ class NeteaseApiCli(NeteaseAPI):
     def __del__(self):
         self.dump_cookie(self._cookies)
 
+    def decrypt(self, data):
+        return super(NeteaseApiCli, self).decrypt(data)
+
     def get_player_url(self, tids, bitrate=3200000):
         return super(NeteaseApiCli, self).get_player_url(int(tids), bitrate)
 
