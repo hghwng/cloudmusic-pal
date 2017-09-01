@@ -109,8 +109,8 @@ class NeteaseApiCli(NeteaseAPI):
     def decrypt(self, data):
         return super(NeteaseApiCli, self).decrypt(data)
 
-    def get_player_url(self, tids, bitrate=3200000):
-        return super(NeteaseApiCli, self).get_player_url(int(tids), bitrate)
+    def get_player_url(self, *tids, bitrate=3200000):
+        return super(NeteaseApiCli, self).get_player_url(list(map(int, tids)), bitrate)
 
     def get_download_url(self, tid, bitrate=3200000):
         return super(NeteaseApiCli, self).get_download_url(int(tid), bitrate)
