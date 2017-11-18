@@ -12,9 +12,12 @@ class NeteaseAPI:
     def __init__(self):
         self.req = requests.Session()
         self.req.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
-                                         ' (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36'
+                                         ' (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
         self.req.headers['Origin'] = 'orpheus://orpheus'
-        self.req.cookies['os'] = 'linux';
+        self.req.cookies['os'] = 'linux'
+        self.req.cookies['osver'] = 'unknown'
+        self.req.cookies['channel'] = 'release'
+        self.req.cookies['appver'] = '1.1.0.1232'
 
     @staticmethod
     def decrypt(data: str) -> dict:
