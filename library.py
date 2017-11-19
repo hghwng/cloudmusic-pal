@@ -142,33 +142,57 @@ class Library:
 
 
     def _download_track(self, tid, file_info, meta):
-        import hashlib
+        # Parse info
         size, url, ext = file_info['size'], file_info['url'], file_info['type']
         if url is None:
             Library.L.warning('Download unavailable: %s: %s', tid, meta['name'])
             return False
         Library.L.info('Downloading %s: %s, %s', tid, meta['name'], _size_format(size))
-
         tmp_path = self._TMP_DIR + str(tid) + '.' + ext
         Library.download_file(url, tmp_path)
-        if os.path.getsize(tmp_path) != file_info['size']:
-            Library.L.error('Download failed (size not matching): %s: %s', tid, meta['name'])
-            os.remove(tmp_path)
-            return False
-        if file_info['md5'] != hashlib.md5(open(tmp_path, 'rb').read()).hexdigest():
-            Library.L.error('Download failed (md5 not matching): %s: %s', tid, meta['name'])
+
+        # Check size and hash
+        CHECK_TOO_SMALL = 0
+        CHECK_SIZE_MISS = 1
+        CHECK_HASH_MISS = 2
+        CHECK_HASH_MATCH = 3
+
+        check_status = CHECK_TOO_SMALL
+        import hashlib
+        file_size = os.path.getsize(tmp_path)
+        ratio = file_size / file_info['size']
+        if ratio < 0.9:
+            Library.L.error('Size too small: %d: %s (%.0f%%: %s -> %s)',
+                            tid, meta['name'],
+                            ratio * 100, _size_format(file_size),
+                            _size_format(file_info['size']))
+            check_status = CHECK_TOO_SMALL
+        elif file_size != file_info['size']:
+            Library.L.warning('Size mismatch: %d: %s', tid, meta['name'])
+            check_status = CHECK_SIZE_ALMOST
+        elif file_info['md5'] != hashlib.md5(open(tmp_path, 'rb').read()).hexdigest():
+            Library.L.warning('Hash mismatch: %d: %s', tid, meta['name'])
+            check_status = CHECK_HASH_MISS
+        else:
+            check_status = CHECK_HASH_MATCH
+
+        if check_status == CHECK_TOO_SMALL:
+            # Fail only when size is too small
             os.remove(tmp_path)
             return False
 
+        # Tag
         Library.L.debug('Tagging %s', tid)
         Library.tag(tmp_path, meta)
 
+        # Remove old file
         if tid in self._db['local_tracks']:
             prev_path = self._TRACK_DIR + str(tid) + '.' + self._db['local_tracks'][tid]['ext']
             os.remove(prev_path)
         new_path = self._TRACK_DIR + str(tid) + '.' + ext
         os.rename(tmp_path, new_path)
 
+        # Add to DB
         local_track = dict(size=os.path.getsize(new_path), ext=ext, bitrate=file_info['br'])
         self._db['local_tracks'][tid] = local_track
         return True
