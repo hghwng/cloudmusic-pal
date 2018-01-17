@@ -47,6 +47,9 @@ class Library:
 
     @staticmethod
     def download_file(url, path):
+        cdn = '220.243.197.54'
+        url = url.replace('m10.music.126.net', cdn + '/m10.music.126.net')
+        # print(url)
         r = requests.get(url, stream=True)
         with open(path, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
@@ -152,12 +155,13 @@ class Library:
         Library.download_file(url, tmp_path)
 
         # Check size and hash
-        CHECK_TOO_SMALL = 0
-        CHECK_SIZE_MISS = 1
-        CHECK_HASH_MISS = 2
-        CHECK_HASH_MATCH = 3
+        CHECK_SIZE_TOO_SMALL = 0
+        CHECK_SIZE_MISS      = 1
+        CHECK_SIZE_ALMOST    = 2
+        CHECK_HASH_MISS      = 3
+        CHECK_HASH_MATCH     = 4
 
-        check_status = CHECK_TOO_SMALL
+        check_status = CHECK_SIZE_TOO_SMALL
         import hashlib
         file_size = os.path.getsize(tmp_path)
         ratio = file_size / file_info['size']
@@ -166,7 +170,7 @@ class Library:
                             tid, meta['name'],
                             ratio * 100, _size_format(file_size),
                             _size_format(file_info['size']))
-            check_status = CHECK_TOO_SMALL
+            check_status = CHECK_SIZE_TOO_SMALL
         elif file_size != file_info['size']:
             Library.L.warning('Size mismatch: %d: %s', tid, meta['name'])
             check_status = CHECK_SIZE_ALMOST
@@ -176,7 +180,7 @@ class Library:
         else:
             check_status = CHECK_HASH_MATCH
 
-        if check_status == CHECK_TOO_SMALL:
+        if check_status == CHECK_SIZE_TOO_SMALL:
             # Fail only when size is too small
             os.remove(tmp_path)
             return False
@@ -374,7 +378,7 @@ class LibraryCli(object):
             print(pid, playlist['name'])
             self._lib.download_tracks(playlist['tids'],
                                 Library.DOWNLOAD_STRATEGY_MISSING,
-                                Library.DOWNLOAD_SOURCE_DOWNLOAD)
+                                Library.DOWNLOAD_SOURCE_PLAY)
             # Save in case the download progress crashes
             self._lib.save()
 
