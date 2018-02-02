@@ -225,7 +225,7 @@ class Library:
 
         # Fix invalid tracks with no metadata. See 16611839
         for tid in tids.difference(details.keys()):
-            Library.L.warn('Unknown track %d, excluding from download list', priv['id'])
+            Library.L.warn('Unknown track %d, excluding from download list', tid)
             tids.discard(tid)
 
         list_download = list()
