@@ -215,17 +215,17 @@ class Library:
         details = {t['id']: dict(meta=t) for t in details_api['songs']}
         for priv in details_api['privileges']:
             if priv['id'] not in details:
-                Library.L.warn('Unknown track %d, excluding from download list', priv['id'])
+                Library.L.warning('Unknown track %d, excluding from download list', priv['id'])
                 tids.discard(priv['id'])
             if priv.get('st', 0) < 0:
-                Library.L.warn('Disabled track %d (status = %d), excluding from download list', priv['id'], priv['st'])
+                Library.L.warning('Disabled track %d (status = %d), excluding from download list', priv['id'], priv['st'])
                 tids.discard(priv['id'])
             else:
                 details[priv['id']]['priv'] = priv
 
         # Fix invalid tracks with no metadata. See 16611839
         for tid in tids.difference(details.keys()):
-            Library.L.warn('Unknown track %d, excluding from download list', tid)
+            Library.L.warning('Unknown track %d, excluding from download list', tid)
             tids.discard(tid)
 
         list_download = list()
