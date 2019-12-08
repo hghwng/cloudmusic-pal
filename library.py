@@ -365,9 +365,14 @@ class LibraryCli(object):
     def radio_pull(self, num_pull=3, source=None):
         self._lib.pull_radio(num_pull, source)
 
-    def pl_show(self):
-        for pid, playlist in self._playlists.items():
-            print(pid, playlist['name'])
+    def pl_show(self, *pids):
+        if pids:
+            for pid in pids:
+                for tid in self._playlists[pid]['tids']:
+                    print(tid)
+        else:
+            for pid, playlist in self._playlists.items():
+                print(pid, playlist['name'])
 
     def pl_down(self, *pids):
         pids = list(pids)
