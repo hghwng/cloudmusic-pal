@@ -325,7 +325,7 @@ class Library:
         local_tracks = self._db['local_tracks']
         for tid in tids:
             if tid in local_tracks:
-                path = self._TRACK_DIR + str(tid) + '.' + local_tracks[tid]['ext']
+                path = str(tid) + '.' + local_tracks[tid]['ext']
                 m3u_file.write(path + '\n')
             else:
                 Library.L.warning('Missing file for track %d', tid)
