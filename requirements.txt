@@ -1,4 +1,4 @@
-fire==0.1.0
-pycrypto==2.6.1
-pytaglib==1.4.0
-requests==2.20.0
+fire
+pycrypto
+pytaglib
+requests
