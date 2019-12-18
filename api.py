@@ -98,6 +98,18 @@ class NeteaseAPI:
         URL = 'http://music.163.com/api/point/dailyTask'
         return self.request(URL, dict(type=type_))
 
+    def search(self, keyword: str, type_: int, offset: int, limit: int):
+        URL = 'http://music.163.com/api/cloudsearch/get/web'
+        return self.request(URL, dict(s=keyword, offset=offset, type=type_))
+
+    def mytest(self):
+        '''
+url:    http://music.163.com/batch
+method: GET
+params: {"/api/artist/sublist": "{\"limit\":20,\"offset\":0}", "/api/discovery/recommend/artist/hasdata": "{}"}
+        '''
+        URL = 'http://music.163.com/api/album/sublist'
+        return self.request(URL, dict())
 
 class NeteaseApiCli(NeteaseAPI):
     def __init__(self, cookies="cookies"):
