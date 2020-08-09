@@ -380,12 +380,19 @@ class LibraryCli(object):
             pids = self._playlists.keys()
         for pid in pids:
             playlist = self._playlists[pid]
-            print(pid, playlist['name'])
-            self._lib.download_tracks(playlist['tids'],
-                                Library.DOWNLOAD_STRATEGY_MISSING,
-                                Library.DOWNLOAD_SOURCE_PLAY)
-            # Save in case the download progress crashes
-            self._lib.save()
+            tracks = playlist['tids']
+
+            start = 0
+            while start < len(tracks):
+                next_start = start + 200
+                print(pid, playlist['name'], f'{start} / {len(tracks)}')
+                self._lib.download_tracks(tracks[start:next_start],
+                                          Library.DOWNLOAD_STRATEGY_UPGRADE,
+                                          Library.DOWNLOAD_SOURCE_PLAY)
+                # Save in case the download progress crashes
+                self._lib.save()
+                start = next_start
+
 
     def m3u(self):
         for pid, playlist in self._playlists.items():
