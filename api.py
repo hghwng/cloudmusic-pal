@@ -38,7 +38,10 @@ class NeteaseAPI:
         payload_dict = dict(url=url, method=method, params=params)
         payload_bytes = NeteaseAPI.encrypt(payload_dict)
         response = self.req.post(NeteaseAPI._API_URL, {'eparams': payload_bytes})
-        return json.loads(response.text)
+        try:
+            return json.loads(response.text)
+        except json.decoder.JSONDecodeError as e:
+            print("ERROR: ", e)
 
     def dump_cookie(self, path):
         import pickle
