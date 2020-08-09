@@ -14,9 +14,10 @@ class NeteaseAPI:
         self.req.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
                                          ' (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
         self.req.headers['Origin'] = 'orpheus://orpheus'
+        self.req.headers['Connection'] = 'closed'
         self.req.cookies['os'] = 'linux'
         self.req.cookies['osver'] = 'unknown'
-        self.req.cookies['channel'] = 'release'
+        self.req.cookies['channel'] = 'netease'
         self.req.cookies['appver'] = '1.1.0.1232'
 
     @staticmethod
