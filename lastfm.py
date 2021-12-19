@@ -66,6 +66,11 @@ def search_netease(title, artist, api):
                 )
         return tid
 
+    tracks = sorted(tracks, key=lambda t: t['id'])
+    # Filter if there exists matched ones
+    if len(matches) > 1:
+        tracks = [track for track in tracks if track['id'] in matches]
+
     for track in tracks:
         symbol = '✓' if track['id'] in matches else '×'
         print(
@@ -109,7 +114,7 @@ def main():
 
     if tids:
         print("Adding tracks to playlist: ", tids)
-        api.manipulate_playlist_tracks(4868922696, tids, 'add')
+        api.manipulate_playlist_tracks(PLAYLIST_ID, tids, 'add')
     api.dump_cookie("cookies")
 
 
