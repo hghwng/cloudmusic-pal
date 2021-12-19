@@ -2,8 +2,8 @@
 import base64
 import json
 import requests
-from Crypto.Cipher import AES
 from ratelimit import limits, sleep_and_retry
+from Cryptodome.Cipher import AES
 
 
 class NeteaseAPI:

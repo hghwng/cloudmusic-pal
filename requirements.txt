@@ -1,5 +1,5 @@
 fire
-pycrypto
+pycryptodomex
 pytaglib
 requests
 ratelimit
