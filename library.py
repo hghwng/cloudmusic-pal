@@ -237,7 +237,10 @@ class Library:
                 if local_tracks[tid]['ext'] != 'mp3':
                     bitrate_local = 999000
                 else:
-                    bitrate_local = local_tracks[tid]['bitrate']
+                    bitrate_local = local_tracks[tid].get('bitrate')
+                    if bitrate_local is None:
+                        Library.L.warning("unknown bitrate for track %d", tid)
+                        bitrate_local = 0
 
             meta, priv = details[tid]['meta'], details[tid]['priv']
             method = 0
