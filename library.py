@@ -140,6 +140,7 @@ class Library:
         redundant_tracks = set(local_tracks.keys()).difference(remote_tracks)
         for tid in redundant_tracks:
             self.L.info("Deleted remote track: %d", tid)
+        self._save_tids('!redundant', redundant_tracks)
 
         return changed_tracks, redundant_tracks
 
