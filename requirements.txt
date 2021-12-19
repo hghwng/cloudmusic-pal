@@ -2,3 +2,4 @@ fire
 pycrypto
 pytaglib
 requests
+ratelimit

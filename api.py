@@ -3,6 +3,7 @@ import base64
 import json
 import requests
 from Crypto.Cipher import AES
+from ratelimit import limits, sleep_and_retry
 
 
 class NeteaseAPI:
@@ -34,6 +35,8 @@ class NeteaseAPI:
         data_bytes += bytes((pad_length,)) * pad_length
         return base64.b16encode(NeteaseAPI._AES_OBJ.encrypt(data_bytes))
 
+    @sleep_and_retry
+    @limits(calls=2, period=2)
     def request(self, url, params, method='POST'):
         payload_dict = dict(url=url, method=method, params=params)
         payload_bytes = NeteaseAPI.encrypt(payload_dict)
