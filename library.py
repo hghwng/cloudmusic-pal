@@ -193,7 +193,10 @@ class Library:
         # Remove old file
         if tid in self._db['local_tracks']:
             prev_path = self._TRACK_DIR + str(tid) + '.' + self._db['local_tracks'][tid]['ext']
-            os.remove(prev_path)
+            try:
+                os.remove(prev_path)
+            except FileNotFoundError:
+                pass
         new_path = self._TRACK_DIR + str(tid) + '.' + ext
         os.rename(tmp_path, new_path)
 
@@ -343,7 +346,10 @@ class LibraryCli(object):
     def __init__(self, db_path, cookies_path="cookies"):
         self._cookies_name = cookies_path
         self._api = NeteaseAPI()
-        self._api.load_cookie(self._cookies_name)
+        try:
+            self._api.load_cookie(self._cookies_name)
+        except FileNotFoundError:
+            pass
         self._db_path = db_path
         self._lib = Library(db_path, self._api)
         self._playlists = self._lib._db['playlists']
